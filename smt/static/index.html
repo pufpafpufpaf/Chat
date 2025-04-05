@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAN Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chat { width: 80%; max-width: 600px; margin: auto; border: 1px solid #ccc; padding: 10px; }
+        #messages { height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; text-align: left; }
+        input, button { padding: 10px; margin-top: 10px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <h2>LAN Chat</h2>
+    <div id="chat">
+        <div id="messages"></div>
+        <input type="text" id="username" placeholder="Enter your username">
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        let ws = new WebSocket(`ws://${window.location.host}/ws`);
+    
+        ws.onopen = () => console.log("Connected to WebSocket server");
+    
+        ws.onmessage = (event) => {
+            let data = JSON.parse(event.data);
+            let chatBox = document.getElementById("messages");
+    
+            // Check if the data is an array (batch of messages)
+            if (Array.isArray(data)) {
+                data.forEach(msg => {
+                    chatBox.innerHTML += `<p><strong>${msg.username}:</strong> ${msg.message}</p>`;
+                });
+            } else {
+                // Single message
+                chatBox.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+            }
+    
+            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
+        };
+    
+        function sendMessage() {
+            let username = document.getElementById("username").value || "Anonymous";
+            let message = document.getElementById("message").value;
+            if (message.trim() === "") return;
+    
+            ws.send(JSON.stringify({ username, message }));
+            document.getElementById("message").value = ""; // Clear input after sending
+        }
+    
+        document.getElementById("message").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+
+</body>
+</html>
