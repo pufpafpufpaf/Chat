@@ -137,7 +137,13 @@ func main() {
 	r.Static("/static", "./static") // Serve frontend from 'static' folder
 
 	r.GET("/", func(c *gin.Context) {
-		c.File("./static/index.html") // Serve the main HTML file
+		c.File("./static/login.html") // Serve the main HTML file
+	})
+	r.GET("/signup", func(c *gin.Context) {
+		c.File("./static/signup.html")
+	})
+	r.GET("/chat", func(c *gin.Context) {
+		c.File("./static/index.html")
 	})
 
 	r.GET("/ws", handleConnections)
