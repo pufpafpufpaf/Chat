@@ -139,9 +139,50 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.File("./static/login.html") // Serve the main HTML file
 	})
+
+	r.POST("/login", func(c *gin.Context) {
+		var credentials struct {
+			Username string `json:"username"`
+			Password string `json:"password"`
+		}
+		if err := db.Ping(); err != nil {
+			log.Fatalf("Error verifying connection to the database: %v", err)
+		}
+		// Bind JSON data from the request body to the credentials struct
+		if err := c.ShouldBindJSON(&credentials); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON data"})
+			return
+		}
+
+		// Example: Validate credentials (you can replace this with your own logic)
+		if credentials.Username == "" || credentials.Password == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Username and password are required"})
+			return
+		}
+
+		// Example: Check credentials in the database (replace with your own logic)
+		query := "SELECT COUNT(*) FROM users WHERE name = $1 AND password_hash = $2"
+		var count int
+		err := db.QueryRow(query, credentials.Username, credentials.Password).Scan(&count)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+			return
+		}
+
+		if count == 0 {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+			return
+		}
+
+		// Respond with success
+		c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	})
+
 	r.GET("/signup", func(c *gin.Context) {
 		c.File("./static/signup.html")
+
 	})
+
 	r.GET("/chat", func(c *gin.Context) {
 		c.File("./static/index.html")
 	})
