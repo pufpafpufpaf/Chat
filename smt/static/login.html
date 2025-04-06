@@ -5,47 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        #login { width: 80%; max-width: 400px; margin: auto; border: 1px solid #ccc; padding: 10px; }
-        input, button { padding: 10px; margin-top: 10px; width: 95%; }
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); /* Dark gradient background */
+            color: #e0e0e0; /* Light gray text color */
+            margin: 0; 
+            padding: 0; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        #login { 
+            width: 80%; 
+            max-width: 400px; 
+            margin: auto; 
+            border: 1px solid #444; /* Dark gray border */
+            border-radius: 10px; /* Rounded corners */
+            padding: 20px; 
+            background: #1e1e2f; /* Dark background for the form */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+        }
+        input, button { 
+            padding: 12px; 
+            margin-top: 15px; 
+            width: 95%; 
+            border: 1px solid #555; /* Darker border for inputs */
+            border-radius: 5px; 
+            font-size: 16px; 
+            background: #2a2a3b; /* Dark input background */
+            color: #e0e0e0; /* Light text color */
+            transition: all 0.3s ease; /* Smooth transition for hover effects */
+        }
+        input:focus { 
+            border-color: #6a5acd; /* Soft purple border on focus */
+            outline: none; 
+            box-shadow: 0 0 8px #6a5acd; /* Purple glow */
+        }
+        button { 
+            background: linear-gradient(135deg, #6a5acd, #483d8b); /* Gradient button */
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        button:hover { 
+            background: linear-gradient(135deg, #483d8b, #6a5acd); /* Reverse gradient on hover */
+            box-shadow: 0 4px 10px rgba(106, 90, 205, 0.5); /* Glow effect */
+        }
+        h2 { 
+            color: #6a5acd; /* Soft purple heading */
+            font-size: 24px; 
+            margin-bottom: 20px; 
+        }
     </style>
 </head>
 <body>
-
-    <h2>Login</h2>
     <div id="login">
+        <h2>Login</h2>
         <input type="text" id="username" placeholder="Enter your username" required>
         <input type="password" id="password" placeholder="Enter your password" required>
-        <button onclick="login()">Login</button>
+        <button onclick="submitLogin()">Login</button>
     </div>
 
     <script>
-        function login() {
+        function submitLogin() {
             let username = document.getElementById("username").value;
             let password = document.getElementById("password").value;
 
             if (username.trim() === "" || password.trim() === "") {
-                alert("Please fill in both fields.");
+                alert("Please fill in all fields.");
                 return;
             }
 
-            // Here you would typically send a request to your server to log in
-            // For example:
-            // fetch('/login', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json'
-            //     },
-            //     body: JSON.stringify({ username, password })
-            // })
-            // .then(response => response.json())
-            // .then(data => {
-            //     if (data.success) {
-            //         // Redirect or show success message
-            //     } else {
-            //         alert(data.message);
-            //     }
-            // });
+            // Here you would typically send the data to the server
+            // For example, using fetch or XMLHttpRequest
+            console.log("Logging in with:", { username, password });
         }
     </script>
 
