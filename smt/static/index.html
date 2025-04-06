@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,28 +7,30 @@
     <style>
         body { 
             font-family: Arial, sans-serif; 
-            text-align: center; 
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); /* Dark gradient background */
-            color: #e0e0e0; /* Light gray text color */
             margin: 0; 
             padding: 0; 
             height: 100vh; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); /* Dark gradient background */
+            color: #e0e0e0; /* Light gray text color */
         }
         #chat { 
-            width: 80%; 
-            max-width: 600px; 
-            margin: auto; 
-            border: 1px solid #444; /* Dark gray border */
-            border-radius: 10px; /* Rounded corners */
+            width: 100%; 
+            height: 100%; 
+            max-width: none; 
+            margin: 0; 
+            border: none; 
+            border-radius: 0; 
             padding: 20px; 
             background: #1e1e2f; /* Dark background for the chat box */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+            box-shadow: none; /* Remove shadow */
+            display: flex; 
+            flex-direction: column; 
         }
         #messages { 
-            height: 300px; 
+            flex: 1; /* Take up available space */
             overflow-y: auto; 
             border: 1px solid #555; /* Darker border for messages */
             padding: 10px; 
@@ -36,6 +38,7 @@
             background: #2a2a3b; /* Dark background for messages */
             color: #e0e0e0; /* Light text color */
             border-radius: 5px; 
+            margin-bottom: 10px; 
         }
         input, button { 
             padding: 12px; 
@@ -68,6 +71,7 @@
             color: #6a5acd; /* Soft purple heading */
             font-size: 24px; 
             margin-bottom: 20px; 
+            text-align: center;
         }
     </style>
 </head>
@@ -76,7 +80,6 @@
     <div id="chat">
         <h2>LAN Chat</h2>
         <div id="messages"></div>
-        <input type="text" id="username" placeholder="Enter your username">
         <input type="text" id="message" placeholder="Type a message">
         <button onclick="sendMessage()">Send</button>
     </div>
@@ -104,7 +107,7 @@
         };
     
         function sendMessage() {
-            let username = document.getElementById("username").value || "Anonymous";
+            let username = "Anonymous"; // Default username
             let message = document.getElementById("message").value;
             if (message.trim() === "") return;
     
