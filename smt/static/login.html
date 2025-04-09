@@ -27,6 +27,18 @@
             background: #1e1e2f; /* Dark background for the form */
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Subtle shadow */
         }
+        #signup-link {
+            display: block;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #6a5acd; /* Soft purple text */
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        #signup-link:hover {
+            color: #483d8b; /* Darker purple on hover */
+            text-decoration: underline;
+        }
         input, button { 
             padding: 12px; 
             margin-top: 15px; 
@@ -67,6 +79,7 @@
         <input type="text" id="username" placeholder="Enter your username" required>
         <input type="password" id="password" placeholder="Enter your password" required>
         <button onclick="submitLogin()">Login</button>
+        <a href="/signup" id="signup-link">Don't have an account?</a>
     </div>
 
     <script>
@@ -112,7 +125,7 @@
         })
         .catch(error => {
             console.error("Error:", error);
-            alert("An error occurred. Please try again.");
+            alert("Something is not right😝");
         });
     }
     </script>

@@ -27,6 +27,18 @@
             background: #1e1e2f; /* Dark background for the form */
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Subtle shadow */
         }
+        #login-link {
+            display: block;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #6a5acd; /* Soft purple text */
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        #login-link:hover {
+            color: #483d8b; /* Darker purple on hover */
+            text-decoration: underline;
+        }
         input, button { 
             padding: 12px; 
             margin-top: 15px; 
@@ -68,9 +80,17 @@
         <input type="text" id="username" placeholder="Enter your username" required>
         <input type="password" id="password" placeholder="Enter your password" required>
         <button onclick="submitSignup()">Sign Up</button>
+        <a href="/login" id="login-link">Already have an account?</a>
     </div>
 
     <script>
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                submitSignup();
+            }
+        });
+
         function submitSignup() {
             let username = document.getElementById("username").value;
             let password = document.getElementById("password").value;
@@ -80,9 +100,33 @@
                 return;
             }
 
-            // Here you would typically send the data to the server
-            // For example, using fetch or XMLHttpRequest
-            console.log("Signing up with:", { username, password });
+            const data = {
+            username: username,
+            password: password
+        };
+
+        // Send the data to the server using fetch
+        fetch(`http://${window.location.host}/signup`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Redirect to /chat
+            window.location.href = "/chat";
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Something is not right😝");
+        });
         }
     </script>
 
