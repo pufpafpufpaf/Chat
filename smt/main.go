@@ -55,12 +55,7 @@ func saveMessageToDB(msg Message) {
 
 func getLastMessages() ([]Message, error) {
 	// Updated SELECT query to match the Messages table schema
-	query := `
-		SELECT u.username, m.message 
-		FROM messages m
-		JOIN users u ON m.Id_writer = u.Id
-		ORDER BY m.time DESC
-		LIMIT 50`
+	query := `SELECT u.username, m.message FROM messages m JOIN users u ON m.Id_writer = u.Id ORDER BY m.time LIMIT 50`
 	rows, err := db.Query(query)
 
 	if err != nil {
