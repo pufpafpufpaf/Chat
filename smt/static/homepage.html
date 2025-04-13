@@ -13,6 +13,7 @@
             display: flex;
             background: linear-gradient(135deg, #ff6ec7, #ff99cc, #ffb3de); /* Bubblegum pink gradient */
             color: #ffffff; /* White text color for better readability */
+            overflow: hidden; /* Prevent scrolling */
         }
         #sidebar {
             width: 20%;
@@ -75,6 +76,21 @@
         }
         #friends-list a:hover {
             background: #d125af; /* Pink hover effect */
+        }
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 100%; /* Sidebar takes full width on small screens */
+                max-width: none;
+                height: auto;
+                border-right: none;
+                border-bottom: 2px solid #d125af; /* Add bottom border for separation */
+            }
+            #main-content {
+                padding: 10px; /* Reduce padding */
+            }
+            body {
+                flex-direction: column; /* Stack sidebar and main content vertically */
+            }
         }
     </style>
 </head>

@@ -9,16 +9,18 @@
             font-family: Arial, sans-serif; 
             margin: 0; 
             padding: 0; 
-            height: 90vh; 
+            height: 100vh; /* Ensure the body takes the full viewport height */
             display: flex; 
+            flex-direction: row; /* Align sidebar and chat horizontally */
             justify-content: center; 
             align-items: center; 
             background: linear-gradient(135deg, #ff6ec7, #ff99cc, #ffb3de); /* Bubblegum pink gradient */
             color: #ffffff; /* White text color */
+            overflow: hidden; /* Prevent scrolling */
         }
         #chat { 
             width: 95%; 
-            height: 90%; 
+            height: 100%; /* Match the height of the sidebar */
             max-width: none; 
             margin: 0; 
             border: none; 
@@ -28,10 +30,11 @@
             box-shadow: none; /* Remove shadow */
             display: flex; 
             flex-direction: column; 
+            flex: 1; /* Allow the chat to take up remaining space */
         }
         #messages { 
             flex: 1; /* Take up available space */
-            overflow-y: auto; 
+            overflow-y: hidden; /* Prevent scrolling within the messages area */
             border: 1px solid #a50909; /* Pink border */
             padding: 10px; 
             text-align: left; 
@@ -43,7 +46,7 @@
         input, button { 
             padding: 12px; 
             margin-top: 10px; 
-            width: 100%; 
+            width: 80%; 
             border: 1px solid #ff6ec7; /* Pink border */
             border-radius: 5px; 
             font-size: 16px; 
@@ -73,17 +76,94 @@
             margin-bottom: 20px; 
             text-align: center;
         }
+        #sidebar {
+            width: 20%;
+            max-width: 250px;
+            height: 100%;
+            background: #ff85b3; /* Bubblegum pink background for the sidebar */
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-right: 2px solid #d125af;
+            
+        }
+        #sidebar h2 {
+            color: #d125af; /* Pink heading */
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #sidebar a {
+            text-decoration: none;
+            color: #ffffff; /* White text color for links */
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: block;
+            transition: background 0.3s ease;
+        }
+        #sidebar a:hover {
+            background: #d125af; /* Pink hover */
+            color: white;
+        }
+        #sidebar h4 {
+            font-size: 14px; /* Match the font size of the buttons */
+            color: #ffffff; /* Match the text color of the buttons */
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: #ff85b3; /* Match the background color of the buttons */
+            text-align: center;
+            transition: background 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 100%; /* Sidebar takes full width on small screens */
+                max-width: none;
+                height: auto;
+                border-right: none;
+                border-bottom: 2px solid #d125af; /* Add bottom border for separation */
+            }
+            #chat {
+                width: 100%; /* Chat takes full width */
+                height: calc(100vh - 200px); /* Adjust height to account for sidebar */
+            }
+            body {
+                flex-direction: column; /* Stack sidebar and chat vertically */
+            }
+        }
+        #input-container {
+            display: flex; /* Align input and button horizontally */
+            gap: 10px; /* Add spacing between input and button */
+            margin-top: 10px;
+        }
+        #message {
+            flex: 1; /* Allow the input field to take up remaining space */
+        }
+        button {
+            width: auto; /* Adjust button width to fit content */
+            padding: 12px 20px; /* Add padding for better appearance */
+        }
     </style>
 </head>
 <body>
-
+    <div id="sidebar">
+        <h2>Socket Chat</h2>
+        <a href="/static/index.html">All Chat</a>
+        <a href="">Add Friends</a>
+        <h4>Friends:</h4>
+        <div id="friends-list" style="background: #ffb3de; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto;">
+            <!-- Friends list will go here -->
+        </div>
+    </div>
     <div id="chat">
         <h2>Socket Chat</h2>
         <div id="messages"></div>
-        <input type="text" id="message" placeholder="Type a message">
-        <button onclick="sendMessage()">Send</button>
+        <div id="input-container">
+            <input type="text" id="message" placeholder="Type a message">
+            <button onclick="sendMessage()">Send</button>
+        </div>
     </div>
-
     <script>
         let ws = new WebSocket(`ws://${window.location.host}/ws`);
     
@@ -115,12 +195,12 @@
             document.getElementById("message").value = ""; // Clear input after sending
         }
     
+        // Add an event listener for the Enter key
         document.getElementById("message").addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 sendMessage();
             }
         });
     </script>
-
 </body>
 </html>

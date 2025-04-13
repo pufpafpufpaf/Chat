@@ -16,6 +16,7 @@
             display: flex; 
             justify-content: center; 
             align-items: center; 
+            overflow: hidden; /* Prevent scrolling */
         }
         #login { 
             width: 80%; 
@@ -28,14 +29,16 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Subtle shadow */
         }
         #signup-link {
-            display: inline; /* Ensure it is not a block */
-            margin-top: 25px; /* Move it slightly lower */
-            color: white; /* Match the Login button text color */
+            display: block;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #ff6ec7; /* Pink text */
             text-decoration: none;
             transition: color 0.3s ease;
         }
         #signup-link:hover {
-            color: #f32ecb; /* Match the Login button hover color */
+            color: #ff85b3; /* Lighter pink on hover */
+            text-decoration: underline;
         }
         input, button { 
             padding: 12px; 
@@ -68,6 +71,15 @@
             color: #d125af; /* Pink heading */
             font-size: 24px; 
             margin-bottom: 20px; 
+        }
+        @media (max-width: 768px) {
+            #login {
+                width: 90%; /* Adjust width for smaller screens */
+                padding: 15px; /* Reduce padding */
+            }
+            input, button {
+                width: 100%; /* Inputs and buttons take full width */
+            }
         }
     </style>
 </head>
