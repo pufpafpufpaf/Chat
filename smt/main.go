@@ -55,7 +55,7 @@ func saveMessageToDB(msg Message) {
 func getLastMessages() ([]Message, error) {
 	query := "SELECT username, message FROM messages" //ORDER BY id LIMIT 50"
 	rows, err := db.Query(query)
-	fmt.Println("Query executed:")
+
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,6 @@ func main() {
 		c.Next()
 	})
 
-	//r.Use(AuthRequired())
 	go handleMessages()
 
 	r.Static("/static", "./static") // Serve frontend from 'static' folder
@@ -194,11 +193,9 @@ func main() {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
 		}
-		fmt.Println("/ws good")
 
 		handleConnections(c, username)
-	}) // WebSocket endpoint
-
+	})
 	fmt.Println("Server running on http://localhost:8080")
 	r.Run("0.0.0.0:8080")
 }

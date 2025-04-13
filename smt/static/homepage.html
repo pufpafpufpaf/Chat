@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); /* Dark gradient background */
+            color: #e0e0e0; /* Light gray text color */
+        }
+        #sidebar {
+            width: 25%;
+            max-width: 300px;
+            background: #1e1e2f; /* Dark sidebar background */
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+        #online-sidebar {
+            width: 1000%;
+            max-width: 1200px;
+            background: #2f1f37;
+            padding: 20px;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+        #content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            color: #4633c7; /* Soft purple heading */
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .friend-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .friend-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #2a2a3b; /* Dark background for friend items */
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+        .friend-item:hover {
+            background: #3a3a4b; /* Slightly lighter background on hover */
+        }
+        .friend-item.online {
+            background: #3b3b5b; /* Slightly different dark background for online friends */
+        }
+        .friend-item.online:hover {
+            background: #4b4b6b; /* Slightly lighter background on hover for online friends */
+        }
+        .friend-name {
+            font-size: 16px;
+        }
+        .chat-button {
+            padding: 5px 10px;
+            background: linear-gradient(135deg, #6a5acd, #483d8b); /* Gradient button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+        .chat-button:hover {
+            background: linear-gradient(135deg, #483d8b, #6a5acd); /* Reverse gradient on hover */
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Friends</h2>
+        <ul class="friend-list" id="friends-list">
+            <!-- Friends will be dynamically loaded here -->
+        </ul>
+    </div>
+    <div id="online-sidebar">
+        <h2>Online Friends</h2>
+        <ul class="friend-list" id="online-friends-list">
+            <!-- Online friends will be dynamically loaded here -->
+        </ul>
+    </div>
+
+    <script>
+
+        const friendsList = document.getElementById("friends-list");
+        const onlineFriendsList = document.getElementById("online-friends-list");
+
+        friends.forEach(friend => {
+            if (!friend.online) {
+                const friendItem = document.createElement("li");
+                friendItem.className = "friend-item";
+                friendItem.innerHTML = `
+                    <span class="friend-name">${friend.name}</span>
+                    <button class="chat-button" onclick="startChat('${friend.name}')">Chat</button>
+                `;
+                friendsList.appendChild(friendItem);
+            } else {
+                const onlineFriendItem = document.createElement("li");
+                onlineFriendItem.className = "friend-item online";
+                onlineFriendItem.innerHTML = `
+                    <span class="friend-name">${friend.name}</span>
+                    <button class="chat-button" onclick="startChat('${friend.name}')">Chat</button>
+                `;
+                onlineFriendsList.appendChild(onlineFriendItem);
+            }
+        });
+
+        function startChat(friendName) {
+            // Redirect to chat page or open chat window
+        }
+    </script>
+</body>
+</html>
