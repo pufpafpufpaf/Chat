@@ -42,6 +42,17 @@
             background: #d125af; /* Pink hover */
             color: white;
         }
+        #sidebar h4 {
+            font-size: 14px; /* Match the font size of the buttons */
+            color: #ffffff; /* Match the text color of the buttons */
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: #ff85b3; /* Match the background color of the buttons */
+            text-align: center;
+            transition: background 0.3s ease;
+        }
+
         #main-content {
             flex: 1;
             padding: 20px;
@@ -62,15 +73,23 @@
             max-width: 600px;
             color: #ffffff; /* White text color for paragraphs */
         }
+        #friends-list a:hover {
+            background: #d125af; /* Pink hover effect */
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <h2>LAN Chat</h2>
-        <a href="/static/index.html">Chat</a>
+        <h2>Socket Chat</h2>
+        <a href="/static/index.html">All Chat</a>
+        <a href="">Add Friends</a>
+        <h4>Friends:</h4>
+        <div id="friends-list" style="background: #ffb3de; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto;">
+            
+        </div>
     </div>
     <div id="main-content">
-        <h1>Welcome to LAN Chat</h1>
+        <h1>Welcome to Socket Chat</h1>
         <p>Connect with your friends and colleagues in a secure and private environment. Use the sidebar to navigate through the application.</p>
     </div>
 </body>
