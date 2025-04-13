@@ -173,14 +173,23 @@
             let data = JSON.parse(event.data);
             let chatBox = document.getElementById("messages");
     
+            // Function to escape HTML characters
+            const escapeHTML = (str) => {
+                return str.replace(/&/g, "&amp;")
+                          .replace(/</g, "&lt;")
+                          .replace(/>/g, "&gt;")
+                          .replace(/"/g, "&quot;")
+                          .replace(/'/g, "&#039;");
+            };
+    
             // Check if the data is an array (batch of messages)
             if (Array.isArray(data)) {
                 data.forEach(msg => {
-                    chatBox.innerHTML += `<p><strong>${msg.username}:</strong> ${msg.message}</p>`;
+                    chatBox.innerHTML += `<p><strong>${escapeHTML(msg.username)}:</strong> ${escapeHTML(msg.message)}</p>`;
                 });
             } else {
                 // Single message
-                chatBox.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+                chatBox.innerHTML += `<p><strong>${escapeHTML(data.username)}:</strong> ${escapeHTML(data.message)}</p>`;
             }
     
             chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
