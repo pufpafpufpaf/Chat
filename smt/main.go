@@ -45,7 +45,8 @@ func initDB() {
 }
 
 func saveMessageToDB(msg Message) {
-	query := "INSERT INTO messages (username, message) VALUES ($1, $2)"
+	// Updated INSERT query to match the Messages table schema
+	query := "INSERT INTO messages (id_writer, message) VALUES ((SELECT id FROM users WHERE username = $1), $2)"
 	_, err := db.Exec(query, msg.Username, msg.Message)
 	if err != nil {
 		log.Printf("Error saving message to database: %v", err)
@@ -53,7 +54,13 @@ func saveMessageToDB(msg Message) {
 }
 
 func getLastMessages() ([]Message, error) {
-	query := "SELECT username, message FROM messages" //ORDER BY id LIMIT 50"
+	// Updated SELECT query to match the Messages table schema
+	query := `
+		SELECT u.username, m.message 
+		FROM messages m
+		JOIN users u ON m.Id_writer = u.Id
+		ORDER BY m.time DESC
+		LIMIT 50`
 	rows, err := db.Query(query)
 
 	if err != nil {
@@ -64,9 +71,7 @@ func getLastMessages() ([]Message, error) {
 	var messages []Message
 
 	for rows.Next() {
-
 		var msg Message
-
 		if err := rows.Scan(&msg.Username, &msg.Message); err != nil {
 			return nil, err
 		}

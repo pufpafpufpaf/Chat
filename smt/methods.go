@@ -28,7 +28,7 @@ func Login(db *sql.DB, c *gin.Context) (bool, error) {
 		return false, nil
 	}
 
-	query := "SELECT COUNT(*) FROM users WHERE username = $1 AND password_hash = $2"
+	query := "SELECT COUNT(*) FROM users WHERE username = $1 AND password = $2"
 	var count int
 	err := db.QueryRow(query, credentials.Username, credentials.Password).Scan(&count)
 	if err != nil {
@@ -70,8 +70,7 @@ func Signup(db *sql.DB, c *gin.Context) (bool, error) {
 		return false, nil
 	}
 
-	// Example: Check credentials in the database (replace with your own logic)
-	query := "INSERT INTO users (username, password_hash) VALUES ($1, $2)"
+	query := "INSERT INTO users (username, password) VALUES ($1, $2)"
 	_, err := db.Exec(query, credentials.Username, credentials.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
