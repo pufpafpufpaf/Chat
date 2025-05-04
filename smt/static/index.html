@@ -101,10 +101,12 @@
             border-radius: 5px;
             display: block;
             transition: background 0.3s ease;
+            outline: 2px solid #ffffff; /* Add white outline */
         }
         #sidebar a:hover {
             background: #d125af; /* Pink hover */
             color: white;
+            outline: 2px solid #d125af; /* Change outline color on hover */
         }
         #sidebar h4 {
             font-size: 14px; /* Match the font size of the buttons */
@@ -131,6 +133,27 @@
             body {
                 flex-direction: column; /* Stack sidebar and chat vertically */
             }
+            #friend-requests-container {
+                width: 90%; /* Adjust modal width for smaller screens */
+            }
+            button {
+                width: 100%; /* Buttons take full width */
+            }
+            #input-container {
+                flex-direction: column; /* Stack input and button vertically */
+                gap: 5px; /* Reduce spacing */
+            }
+        }
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 20px; /* Reduce heading size */
+            }
+            #messages {
+                font-size: 14px; /* Reduce font size for messages */
+            }
+            input, button {
+                font-size: 14px; /* Reduce input and button font size */
+            }
         }
         #input-container {
             display: flex; /* Align input and button horizontally */
@@ -144,13 +167,59 @@
             width: auto; /* Adjust button width to fit content */
             padding: 12px 20px; /* Add padding for better appearance */
         }
+        #friend-requests-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            background: #ff85b3; /* Match sidebar background */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+            display: none; /* Initially hidden */
+            z-index: 1000; /* Ensure it appears above other elements */
+        }
+        #friend-requests-container h4 {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #ffffff; /* White text color */
+        }
+        #friend-requests-container input {
+            width: calc(100% - 20px); /* Adjust width to fit container */
+            margin-bottom: 10px;
+        }
+        #friend-requests-container button {
+            width: 100%; /* Full-width buttons */
+            margin-bottom: 10px;
+        }
+        #friend-requests-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            display: none; /* Initially hidden */
+            z-index: 999; /* Ensure it appears below the modal */
+        }
+        #pending-requests div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        #pending-requests button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
         <h2>Socket Chat</h2>
-        <a href="/static/index.html">All Chat</a>
-        <a href="">Add Friends</a>
+        <a href="/chat">All Chat</a>
         <h4>Friends:</h4>
         <div id="friends-list" style="background: #ffb3de; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto;">
             <!-- Friends list will go here -->
@@ -163,6 +232,18 @@
             <input type="text" id="message" placeholder="Type a message">
             <button onclick="sendMessage()">Send</button>
         </div>
+    </div>
+    <button onclick="toggleFriendRequests()" style="position: absolute; top: 10px; right: 20px; z-index: 100;">Friend Requests</button>
+    <div id="friend-requests-overlay" onclick="toggleFriendRequests()"></div>
+    <div id="friend-requests-container">
+        <h4>Send Friend Request:</h4>
+        <input type="text" id="friend-username" placeholder="Enter username">
+        <button onclick="sendFriendRequest()">Send Request</button>
+        <h4>Pending Friend Requests:</h4>
+        <div id="pending-requests" style="max-height: 150px; overflow-y: auto;">
+            <!-- Pending requests will go here -->
+        </div>
+        <button onclick="toggleFriendRequests()">Close</button>
     </div>
     <script>
         let ws = new WebSocket(`ws://${window.location.host}/ws`);
@@ -193,6 +274,21 @@
             }
     
             chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
+
+            if (data.type === "friend_request_update") {
+                const pendingRequests = document.getElementById("pending-requests");
+                pendingRequests.innerHTML = ""; // Clear existing requests
+                data.requests.forEach(request => {
+                    const requestDiv = document.createElement("div");
+                    requestDiv.style.marginBottom = "10px";
+                    requestDiv.innerHTML = `
+                        <span>${request.username}</span>
+                        <button onclick="acceptRequest('${request.username}')">Accept</button>
+                        <button onclick="deleteRequest('${request.username}')">Delete</button>
+                    `;
+                    pendingRequests.appendChild(requestDiv);
+                });
+            }
         };
     
         function sendMessage() {
@@ -210,6 +306,91 @@
                 sendMessage();
             }
         });
+
+        function sendFriendRequest() {
+            const username = document.getElementById("friend-username").value.trim();
+            if (username === "") {
+                alert("Please enter a username.");
+                return;
+            }
+
+            // Prepare the data to send
+            const data = { username };
+
+            // Send the data to the server using fetch
+            fetch(`http://${window.location.host}/frrequest`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to send friend request");
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Friend request sent successfully!");
+                document.getElementById("friend-username").value = ""; // Clear input
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Failed to send friend request.");
+            });
+        }
+
+        function acceptRequest(username) {
+            ws.send(JSON.stringify({ type: "accept_request", username }));
+        }
+
+        function deleteRequest(username) {
+            ws.send(JSON.stringify({ type: "delete_request", username }));
+        }
+
+        function toggleFriendRequests() {
+            const container = document.getElementById("friend-requests-container");
+            const overlay = document.getElementById("friend-requests-overlay");
+            const isVisible = container.style.display === "block";
+
+            if (!isVisible) {
+                fetchFriendRequests(); // Fetch friend requests only when opening the modal
+            }
+
+            container.style.display = isVisible ? "none" : "block";
+            overlay.style.display = isVisible ? "none" : "block";
+        }
+
+        function fetchFriendRequests() {
+            fetch(`http://${window.location.host}/friend-requests`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch friend requests");
+                }
+                return response.json();
+            })
+            .then(data => {
+                const pendingRequests = document.getElementById("pending-requests");
+                pendingRequests.innerHTML = ""; // Clear existing requests
+                data.requests.forEach(request => {
+                    const requestDiv = document.createElement("div");
+                    requestDiv.style.marginBottom = "10px";
+                    requestDiv.innerHTML = `
+                        <span>${request}</span>
+                        <button onclick="acceptRequest('${request}')">Accept</button>
+                        <button onclick="deleteRequest('${request}')">Delete</button>
+                    `;
+                    pendingRequests.appendChild(requestDiv);
+                });
+            })
+            .catch(error => {});
+        }
     </script>
 </body>
 </html>

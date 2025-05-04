@@ -163,6 +163,10 @@ func main() {
 		Login(db, c)
 	})
 
+	r.POST("/frrequest", func(c *gin.Context) {
+		SendFriendRequest(db, c)
+	})
+
 	r.GET("/signup", func(c *gin.Context) {
 		c.File("./static/signup.html")
 	})
@@ -179,7 +183,6 @@ func main() {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
 		}
-		fmt.Println(username)
 
 		c.File("./static/index.html")
 	})
@@ -196,6 +199,11 @@ func main() {
 
 		handleConnections(c, username)
 	})
+
+	r.GET("/friend-requests", AuthRequired(), func(c *gin.Context) {
+		GetFriendRequests(db, c)
+	})
+
 	fmt.Println("Server running on http://localhost:8080")
 	r.Run("0.0.0.0:8080")
 }
