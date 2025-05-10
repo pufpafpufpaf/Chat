@@ -46,7 +46,7 @@ func initDB() {
 }
 
 func saveMessageToDB(msg Message) {
-	// Updated INSERT query to include chat_recv_id
+	// Save messages to the database, including those for "All Chat" with chat_recv_id = 0
 	query := "INSERT INTO messages (id_writer, message, chat_recv_id) VALUES ((SELECT id FROM users WHERE username = $1), $2, $3)"
 	_, err := db.Exec(query, msg.Username, msg.Message, msg.ChatRecvID)
 	if err != nil {
@@ -54,29 +54,34 @@ func saveMessageToDB(msg Message) {
 	}
 }
 
-func getLastMessages() ([]Message, error) {
-	// Updated SELECT query to match the Messages table schema
-	query := `SELECT u.username, m.message FROM messages m JOIN users u ON m.Id_writer = u.Id ORDER BY m.time LIMIT 50`
-	rows, err := db.Query(query)
-
+func getLastMessages(chatRecvID int) ([]Message, error) {
+	// Fetch messages for a specific chat or "All Chat" (chat_recv_id = 0)
+	query := `
+		SELECT u.username, m.message 
+		FROM messages m 
+		JOIN users u ON m.id_writer = u.id 
+		WHERE m.chat_recv_id = $1 
+		ORDER BY m.time 
+		LIMIT 50
+	`
+	rows, err := db.Query(query, chatRecvID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	var messages []Message
-
 	for rows.Next() {
 		var msg Message
 		if err := rows.Scan(&msg.Username, &msg.Message); err != nil {
 			return nil, err
 		}
-
 		messages = append(messages, msg)
 	}
 
 	return messages, nil
 }
+
 func handleConnections(c *gin.Context, username interface{}) {
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -88,7 +93,7 @@ func handleConnections(c *gin.Context, username interface{}) {
 
 	clients[conn] = true
 
-	lastMessages, err := getLastMessages()
+	lastMessages, err := getLastMessages(0) // Load only "All Chat" messages
 	if err != nil {
 		fmt.Println("Error fetching last messages:", err)
 		return
@@ -112,11 +117,11 @@ func handleConnections(c *gin.Context, username interface{}) {
 
 		msg.Username = username.(string)
 
-		// Allow messages without chat_recv_id for "All Chat"
+		// Save the message to the database for "All Chat" or specific chats
 		if msg.ChatRecvID == 0 {
 			log.Printf("Message sent to All Chat by user %s", msg.Username)
+			saveMessageToDB(msg) // Save "All Chat" messages with chat_recv_id = 0
 		} else {
-			// Save the message to the database for specific chats
 			saveMessageToDB(msg)
 		}
 

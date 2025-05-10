@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
+	_ "github.com/lib/pq"
 )
 
 // Login handles user authentication by verifying credentials against the database.
@@ -451,3 +452,5 @@ func GetChatMessages(db *sql.DB, c *gin.Context) {
 	// Respond with the list of messages
 	c.JSON(http.StatusOK, gin.H{"messages": messages})
 }
+
+// CreateGroupChat handles group chat creation in the database.
