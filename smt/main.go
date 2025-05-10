@@ -23,8 +23,9 @@ var broadcast = make(chan Message)
 
 // Define the message structure
 type Message struct {
-	Username string `json:"username"`
-	Message  string `json:"message"`
+	Username   string `json:"username"`
+	Message    string `json:"message"`
+	ChatRecvID int    `json:"chat_recv_id"` // Add chat_recv_id field
 }
 
 func initDB() {
@@ -45,9 +46,9 @@ func initDB() {
 }
 
 func saveMessageToDB(msg Message) {
-	// Updated INSERT query to match the Messages table schema
-	query := "INSERT INTO messages (id_writer, message) VALUES ((SELECT id FROM users WHERE username = $1), $2)"
-	_, err := db.Exec(query, msg.Username, msg.Message)
+	// Updated INSERT query to include chat_recv_id
+	query := "INSERT INTO messages (id_writer, message, chat_recv_id) VALUES ((SELECT id FROM users WHERE username = $1), $2, $3)"
+	_, err := db.Exec(query, msg.Username, msg.Message, msg.ChatRecvID)
 	if err != nil {
 		log.Printf("Error saving message to database: %v", err)
 	}
@@ -110,8 +111,14 @@ func handleConnections(c *gin.Context, username interface{}) {
 		}
 
 		msg.Username = username.(string)
-		// Save the message to the database
-		saveMessageToDB(msg)
+
+		// Allow messages without chat_recv_id for "All Chat"
+		if msg.ChatRecvID == 0 {
+			log.Printf("Message sent to All Chat by user %s", msg.Username)
+		} else {
+			// Save the message to the database for specific chats
+			saveMessageToDB(msg)
+		}
 
 		broadcast <- msg
 	}
@@ -210,6 +217,14 @@ func main() {
 
 	r.POST("/delete-request", AuthRequired(), func(c *gin.Context) {
 		DeleteFriendRequest(db, c)
+	})
+
+	r.GET("/friends-with-chats", AuthRequired(), func(c *gin.Context) {
+		GetFriendsWithChats(db, c)
+	})
+
+	r.GET("/chat-messages", AuthRequired(), func(c *gin.Context) {
+		GetChatMessages(db, c)
 	})
 
 	fmt.Println("Server running on http://localhost:8080")

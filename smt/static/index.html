@@ -292,11 +292,18 @@
         };
     
         function sendMessage() {
-            let username = "Anonymous"; // Default username
             let message = document.getElementById("message").value;
             if (message.trim() === "") return;
-    
-            ws.send(JSON.stringify({ username, message }));
+
+            // Check if a chat is selected or if it's "All Chat"
+            if (!currentChatID) {
+                // Send message to "All Chat" without chat_recv_id
+                ws.send(JSON.stringify({ message }));
+            } else {
+                // Send message to a specific chat with chat_recv_id
+                ws.send(JSON.stringify({ chat_recv_id: currentChatID, message }));
+            }
+
             document.getElementById("message").value = ""; // Clear input after sending
         }
     
@@ -431,6 +438,71 @@
             })
             .catch(error => {});
         }
+
+        let currentChatID = null;
+
+        function fetchFriendsWithChats() {
+            fetch(`http://${window.location.host}/friends-with-chats`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch friends with chats");
+                }
+                return response.json();
+            })
+            .then(data => {
+                const friendsList = document.getElementById("friends-list");
+                friendsList.innerHTML = ""; // Clear existing friends
+                data.friends.forEach(friend => {
+                    const friendButton = document.createElement("button");
+                    friendButton.textContent = friend.username; // Set the button text to the friend's name
+                    friendButton.style.width = "100%"; // Make the button take full width
+                    friendButton.style.textAlign = "center"; // Center the text
+                    friendButton.style.marginBottom = "10px"; // Add spacing between buttons
+                    friendButton.onclick = () => openChat(friend.chat_id); // Attach the click event to open the chat
+                    friendsList.appendChild(friendButton);
+                });
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        }
+
+        function openChat(chatID) {
+            currentChatID = chatID;
+            const chatBox = document.getElementById("messages");
+            chatBox.innerHTML = ""; // Clear existing messages
+
+            // Fetch messages for the selected chat
+            fetch(`http://${window.location.host}/chat-messages?chat_id=${chatID}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch chat messages");
+                }
+                return response.json();
+            })
+            .then(data => {
+                data.messages.forEach(msg => {
+                    chatBox.innerHTML += `<p><strong>${msg.username}:</strong> ${msg.message}</p>`;
+                });
+                chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        }
+
+        // Fetch friends with chats on page load
+        fetchFriendsWithChats();
     </script>
 </body>
 </html>
