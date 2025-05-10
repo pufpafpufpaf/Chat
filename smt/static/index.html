@@ -342,11 +342,51 @@
         }
 
         function acceptRequest(username) {
-            ws.send(JSON.stringify({ type: "accept_request", username }));
+            fetch(`http://${window.location.host}/accept-request`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to accept friend request");
+                }
+                return response.json();
+            })
+            .then(data => { 
+                alert("Friend request accepted!");
+                fetchFriendRequests(); // Refresh the friend requests list
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Failed to accept friend request.");
+            });
         }
 
         function deleteRequest(username) {
-            ws.send(JSON.stringify({ type: "delete_request", username }));
+            fetch(`http://${window.location.host}/delete-request`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to delete friend request");
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Friend request deleted!");
+                fetchFriendRequests(); // Refresh the friend requests list
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Failed to delete friend request.");
+            });
         }
 
         function toggleFriendRequests() {
@@ -382,7 +422,7 @@
                     const requestDiv = document.createElement("div");
                     requestDiv.style.marginBottom = "10px";
                     requestDiv.innerHTML = `
-                        <span>${request}</span>
+                        <span>${request}</span> 
                         <button onclick="acceptRequest('${request}')">Accept</button>
                         <button onclick="deleteRequest('${request}')">Delete</button>
                     `;

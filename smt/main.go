@@ -204,6 +204,14 @@ func main() {
 		GetFriendRequests(db, c)
 	})
 
+	r.POST("/accept-request", AuthRequired(), func(c *gin.Context) {
+		AcceptFriendRequest(db, c)
+	})
+
+	r.POST("/delete-request", AuthRequired(), func(c *gin.Context) {
+		DeleteFriendRequest(db, c)
+	})
+
 	fmt.Println("Server running on http://localhost:8080")
 	r.Run("0.0.0.0:8080")
 }
