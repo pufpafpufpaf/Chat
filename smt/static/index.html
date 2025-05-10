@@ -41,7 +41,20 @@
             background: #ff99cc; /* Lighter pink for messages */
             color:  #a50909;/* Light text color */
             border-radius: 5px; 
-            margin-bottom: 10px; 
+            margin-bottom: 10px;
+            position: relative; /* Add this for absolute positioning of chat name */
+        }
+
+        #chat-name {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #d125af;
+            font-weight: bold;
+            font-size: 18px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
         }
         input, button { 
             padding: 12px; 
@@ -260,7 +273,7 @@
 <body>
     <div id="sidebar">
         <h2>Socket Chat</h2>
-        <a href="/chat">All Chat</a>
+        <a href="#" onclick="openChat(0); return false;">All Chat</a>
         <h4>Friends:</h4>
         <div id="friends-list" style="background: #ffb3de; padding: 10px; border-radius: 5px; max-height: 900px; overflow-y: auto;">
             <!-- Friends list will go here -->
@@ -268,7 +281,10 @@
     </div>
     <div id="chat">
         <h2>Socket Chat</h2>
-        <div id="messages"></div>
+        <div id="messages">
+            <div id="chat-name"></div>
+            <!-- Messages will go here -->
+        </div>
         <div id="input-container">
             <input type="text" id="message" placeholder="Type a message">
             <button onclick="sendMessage()">Send</button>
@@ -593,7 +609,11 @@
         function openChat(chatID) {
             currentChatID = chatID;
             const chatBox = document.getElementById("messages");
-            chatBox.innerHTML = ""; // Clear existing messages
+            chatBox.innerHTML = '<div id="chat-name"></div>'; // Reset messages but keep chat name div
+
+            if (!chatID) {
+                document.getElementById("chat-name").textContent = "All Chat";
+            }
 
             // Fetch messages for the selected chat
             fetch(`http://${window.location.host}/chat-messages?chat_id=${chatID}`, {
@@ -609,14 +629,24 @@
                 return response.json();
             })
             .then(data => {
+                // Update chat name from server response
+                document.getElementById("chat-name").textContent = data.chatName;
+                
+                // Add messages
                 data.messages.forEach(msg => {
                     chatBox.innerHTML += `<p><strong>${msg.username}:</strong> ${msg.message}</p>`;
                 });
-                chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
+                chatBox.scrollTop = chatBox.scrollHeight;
             })
             .catch(error => {
                 console.error("Error:", error);
             });
+        }
+
+        // Initialize with All Chat when page loads
+        window.onload = function() {
+            document.getElementById("chat-name").textContent = "All Chat";
+            currentChatID = 0;
         }
 
         // Fetch friends with chats on page load

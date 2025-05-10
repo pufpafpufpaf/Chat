@@ -286,7 +286,7 @@ func AcceptFriendRequest(db *sql.DB, c *gin.Context) {
 	// Create a new chat in the chats table
 	var chatID int
 	query = "INSERT INTO chats (name) VALUES ($1) RETURNING chat_id"
-	err = db.QueryRow(query, fmt.Sprintf("Chat between %s and %s", currentUsername, request.Username)).Scan(&chatID)
+	err = db.QueryRow(query, fmt.Sprintf("%s and %s", currentUsername, request.Username)).Scan(&chatID)
 	if err != nil {
 		log.Printf("Error creating chat: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create chat"})
@@ -420,6 +420,56 @@ func GetFriendsWithChats(db *sql.DB, c *gin.Context) {
 func GetChatMessages(db *sql.DB, c *gin.Context) {
 	chatID := c.Query("chat_id")
 
+	// If no chat ID is provided, it's All Chat
+	if chatID == "" || chatID == "0" {
+		// Query the database for messages in the specified chat
+		query := `
+			SELECT u.username, m.message
+			FROM messages m
+			JOIN users u ON m.id_writer = u.id
+			WHERE m.chat_recv_id = $1
+			ORDER BY m.time
+		`
+		rows, err := db.Query(query, chatID)
+		if err != nil {
+			log.Printf("Error fetching chat messages: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch messages"})
+			return
+		}
+		defer rows.Close()
+
+		// Collect the messages
+		var messages []map[string]string
+		for rows.Next() {
+			var username, message string
+			if err := rows.Scan(&username, &message); err != nil {
+				log.Printf("Error scanning message row: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process messages"})
+				return
+			}
+			messages = append(messages, map[string]string{
+				"username": username,
+				"message":  message,
+			})
+		}
+
+		// Respond with the list of messages
+		c.JSON(http.StatusOK, gin.H{
+			"messages": messages,
+			"chatName": "All Chat",
+		})
+		return
+	}
+
+	// Get the chat name
+	var chatName string
+	err := db.QueryRow("SELECT name FROM chats WHERE chat_id = $1", chatID).Scan(&chatName)
+	if err != nil {
+		log.Printf("Error fetching chat name: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch chat name"})
+		return
+	}
+
 	// Query the database for messages in the specified chat
 	query := `
 		SELECT u.username, m.message
@@ -452,7 +502,10 @@ func GetChatMessages(db *sql.DB, c *gin.Context) {
 	}
 
 	// Respond with the list of messages
-	c.JSON(http.StatusOK, gin.H{"messages": messages})
+	c.JSON(http.StatusOK, gin.H{
+		"messages": messages,
+		"chatName": chatName,
+	})
 }
 
 // CreateGroupChat creates a new group chat with the specified users
