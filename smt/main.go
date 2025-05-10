@@ -232,6 +232,10 @@ func main() {
 		GetChatMessages(db, c)
 	})
 
+	r.POST("/create-group-chat", AuthRequired(), func(c *gin.Context) {
+		CreateGroupChat(db, c)
+	})
+
 	fmt.Println("Server running on http://localhost:8080")
 	r.Run("0.0.0.0:8080")
 }

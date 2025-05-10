@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
-	_ "github.com/lib/pq"
 )
 
 // Login handles user authentication by verifying credentials against the database.
@@ -372,24 +371,27 @@ func GetFriendsWithChats(db *sql.DB, c *gin.Context) {
 		return
 	}
 
-	// Query the database for friends and their associated chat IDs
+	// Query for both individual chats and group chats
 	query := `
-		SELECT u.username, c.chat_id
-		FROM friends f
-		JOIN users u ON (f.senduser_id = u.id AND f.recvuser_id = $1) OR (f.recvuser_id = u.id AND f.senduser_id = $1)
-		JOIN chats c ON c.chat_id = (
-			SELECT chat_id
-			FROM chat_users
-			WHERE user_id IN (f.senduser_id, f.recvuser_id)
-			GROUP BY chat_id
-			HAVING COUNT(DISTINCT user_id) = 2
-		)
-		WHERE f.accepted = true
+		SELECT DISTINCT 
+			CASE 
+				WHEN c.name LIKE 'Chat between%' THEN 
+					COALESCE(u.username, c.name)
+				ELSE c.name 
+			END as display_name,
+			c.chat_id
+		FROM chat_users cu
+		JOIN chats c ON cu.chat_id = c.chat_id
+		LEFT JOIN chat_users cu2 ON c.chat_id = cu2.chat_id AND cu2.user_id != $1
+		LEFT JOIN users u ON cu2.user_id = u.id
+		WHERE cu.user_id = $1
+		ORDER BY c.chat_id
 	`
+
 	rows, err := db.Query(query, userID)
 	if err != nil {
-		log.Printf("Error fetching friends with chats: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch friends"})
+		log.Printf("Error fetching chats: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch chats"})
 		return
 	}
 	defer rows.Close()
@@ -397,15 +399,15 @@ func GetFriendsWithChats(db *sql.DB, c *gin.Context) {
 	// Collect the friends and their chat IDs
 	var friends []map[string]interface{}
 	for rows.Next() {
-		var friendUsername string
+		var name string
 		var chatID int
-		if err := rows.Scan(&friendUsername, &chatID); err != nil {
-			log.Printf("Error scanning friend row: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process friends"})
+		if err := rows.Scan(&name, &chatID); err != nil {
+			log.Printf("Error scanning chat row: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process chats"})
 			return
 		}
 		friends = append(friends, map[string]interface{}{
-			"username": friendUsername,
+			"username": name,
 			"chat_id":  chatID,
 		})
 	}
@@ -453,4 +455,69 @@ func GetChatMessages(db *sql.DB, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"messages": messages})
 }
 
-// CreateGroupChat handles group chat creation in the database.
+// CreateGroupChat creates a new group chat with the specified users
+func CreateGroupChat(db *sql.DB, c *gin.Context) {
+	var request struct {
+		Name    string   `json:"name"`
+		Friends []string `json:"friends"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// Get the current user's ID
+	session := c.MustGet("session").(*sessions.Session)
+	username := session.Values["username"].(string)
+	var currentUserID int
+	err := db.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&currentUserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
+		return
+	}
+
+	// Start a transaction
+	tx, err := db.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+	defer tx.Rollback()
+
+	// Create the chat
+	var chatID int
+	err = tx.QueryRow("INSERT INTO chats (name) VALUES ($1) RETURNING chat_id", request.Name).Scan(&chatID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create chat"})
+		return
+	}
+
+	// Add the current user to the chat
+	_, err = tx.Exec("INSERT INTO chat_users (chat_id, user_id) VALUES ($1, $2)", chatID, currentUserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add current user"})
+		return
+	}
+
+	// Add all selected friends to the chat
+	for _, friend := range request.Friends {
+		var friendID int
+		err := tx.QueryRow("SELECT id FROM users WHERE username = $1", friend).Scan(&friendID)
+		if err != nil {
+			continue // Skip if friend not found
+		}
+		_, err = tx.Exec("INSERT INTO chat_users (chat_id, user_id) VALUES ($1, $2)", chatID, friendID)
+		if err != nil {
+			continue // Skip if insert fails
+		}
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Group chat created", "chat_id": chatID})
+}

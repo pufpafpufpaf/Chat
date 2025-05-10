@@ -214,6 +214,47 @@
             padding: 5px 10px;
             font-size: 12px;
         }
+        #group-chat-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            background: #ff85b3;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+            text-align: center; /* Center all text content */
+        }
+
+        #group-chat-container input {
+            width: 90%; /* Slightly narrower than container */
+            margin: 10px auto; /* Center the input with auto margins */
+            display: block; /* Make input a block element to allow margin auto */
+        }
+
+        #group-chat-container h4 {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .friend-select-btn {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #ffb3de;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .friend-select-btn.selected {
+            background: #d125af;
+        }
     </style>
 </head>
 <body>
@@ -233,8 +274,23 @@
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
-    <button onclick="toggleFriendRequests()" style="position: absolute; top: 10px; right: 20px; z-index: 100;">Friend Requests</button>
-    <div id="friend-requests-overlay" onclick="toggleFriendRequests()"></div>
+    <div style="position: absolute; top: 10px; right: 20px; z-index: 100; display: flex; gap: 10px;">
+        <button onclick="toggleGroupChat()">Create Group</button>
+        <button onclick="toggleFriendRequests()">Friend Requests</button>
+    </div>
+
+    <div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; z-index: 900;"></div>
+    
+    <div id="group-chat-container">
+        <h4>Create Group Chat:</h4>
+        <input type="text" id="group-name" placeholder="Enter group name">
+        <div id="friend-selection" style="max-height: 200px; overflow-y: auto;">
+            <!-- Friends selection will go here -->
+        </div>
+        <button onclick="createGroupChat()">Create Group</button>
+        <button onclick="toggleGroupChat()">Close</button>
+    </div>
+
     <div id="friend-requests-container">
         <h4>Send Friend Request:</h4>
         <input type="text" id="friend-username" placeholder="Enter username">
@@ -396,47 +452,109 @@
             });
         }
 
+        function fetchFriendRequests() {
+            fetch(`http://${window.location.host}/friend-requests`)
+                .then(response => response.json())
+                .then(data => {
+                    const pendingRequests = document.getElementById("pending-requests");
+                    pendingRequests.innerHTML = "";
+                    data.requests.forEach(request => {
+                        const requestDiv = document.createElement("div");
+                        requestDiv.style.marginBottom = "10px";
+                        requestDiv.innerHTML = `
+                            <span>${request}</span>
+                            <button onclick="acceptRequest('${request}')">Accept</button>
+                            <button onclick="deleteRequest('${request}')">Delete</button>
+                        `;
+                        pendingRequests.appendChild(requestDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+
         function toggleFriendRequests() {
             const container = document.getElementById("friend-requests-container");
-            const overlay = document.getElementById("friend-requests-overlay");
+            const overlay = document.getElementById("overlay");
             const isVisible = container.style.display === "block";
 
             if (!isVisible) {
-                fetchFriendRequests(); // Fetch friend requests only when opening the modal
+                fetchFriendRequests();
             }
 
             container.style.display = isVisible ? "none" : "block";
             overlay.style.display = isVisible ? "none" : "block";
         }
 
-        function fetchFriendRequests() {
-            fetch(`http://${window.location.host}/friend-requests`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Failed to fetch friend requests");
-                }
-                return response.json();
-            })
-            .then(data => {
-                const pendingRequests = document.getElementById("pending-requests");
-                pendingRequests.innerHTML = ""; // Clear existing requests
-                data.requests.forEach(request => {
-                    const requestDiv = document.createElement("div");
-                    requestDiv.style.marginBottom = "10px";
-                    requestDiv.innerHTML = `
-                        <span>${request}</span> 
-                        <button onclick="acceptRequest('${request}')">Accept</button>
-                        <button onclick="deleteRequest('${request}')">Delete</button>
-                    `;
-                    pendingRequests.appendChild(requestDiv);
+        function toggleGroupChat() {
+            const container = document.getElementById("group-chat-container");
+            const overlay = document.getElementById("overlay");
+            const isVisible = container.style.display === "block";
+
+            if (!isVisible) {
+                loadFriendsForGroupChat();
+            }
+
+            container.style.display = isVisible ? "none" : "block";
+            overlay.style.display = isVisible ? "none" : "block";
+        }
+
+        function loadFriendsForGroupChat() {
+            fetch(`http://${window.location.host}/friends-with-chats`)
+                .then(response => response.json())
+                .then(data => {
+                    const selectionDiv = document.getElementById("friend-selection");
+                    selectionDiv.innerHTML = "";
+                    data.friends.forEach(friend => {
+                        const btn = document.createElement("button");
+                        btn.className = "friend-select-btn";
+                        btn.textContent = friend.username;
+                        btn.onclick = () => toggleFriendSelection(btn);
+                        selectionDiv.appendChild(btn);
+                    });
                 });
+        }
+
+        function toggleFriendSelection(button) {
+            button.classList.toggle("selected");
+        }
+
+        function createGroupChat() {
+            const groupName = document.getElementById("group-name").value.trim();
+            if (!groupName) {
+                alert("Please enter a group name");
+                return;
+            }
+
+            const selectedFriends = Array.from(document.getElementsByClassName("friend-select-btn selected"))
+                .map(btn => btn.textContent);
+
+            if (selectedFriends.length === 0) {
+                alert("Please select at least one friend");
+                return;
+            }
+
+            fetch(`http://${window.location.host}/create-group-chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: groupName,
+                    friends: selectedFriends
+                })
             })
-            .catch(error => {});
+            .then(response => response.json())
+            .then(data => {
+                alert("Group chat created!");
+                toggleGroupChat();
+                fetchFriendsWithChats(); // Refresh the friends list
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Failed to create group chat");
+            });
         }
 
         let currentChatID = null;
